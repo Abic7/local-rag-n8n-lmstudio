@@ -40,7 +40,7 @@ If n8n runs inside Docker, swap `127.0.0.1` for `host.docker.internal` in the tw
 | [`LOCAL_MODELS_SETUP.md`](LOCAL_MODELS_SETUP.md) | Model selection, GPU acceleration, troubleshooting |
 | [`video/methodology-animation.html`](video/methodology-animation.html) | Self-contained animated explainer of the build process |
 | [`LINKEDIN_POST.md`](LINKEDIN_POST.md) | The write-up this repo accompanies |
-| [`INTERVIEW_PREP_OVERVIEW.md`](INTERVIEW_PREP_OVERVIEW.md), [`INTERVIEW_TALKING_POINTS.md`](INTERVIEW_TALKING_POINTS.md), [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md), [`QUICK_REFERENCE.txt`](QUICK_REFERENCE.txt) | Interview-prep material — background context, not required to run the pipeline |
+| [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md), [`QUICK_REFERENCE.txt`](QUICK_REFERENCE.txt) | Background context, not required to run the pipeline |
 
 ## How it works
 
