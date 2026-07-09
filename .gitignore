@@ -1,8 +1,20 @@
 # Raw screen recordings — large binaries, not source material.
-# The animation source (video/methodology-animation.html) stays tracked.
 video/*.mp4
 video/*.mov
 video/*.webm
+
+# Personal/prep/social material — kept locally, not needed for the
+# pipeline to function. See README.md for what actually ships here.
+INDEX.md
+INTERVIEW_PREP_OVERVIEW.md
+INTERVIEW_TALKING_POINTS.md
+LINKEDIN_POST.md
+QUICK_REFERENCE.txt
+QUICK_SETUP.ps1
+README_LOCAL_MODELS.md
+SETUP_CHECKLIST.md
+UPDATE_SUMMARY.txt
+video/methodology-animation.html
 
 # OS / editor cruft
 .DS_Store
