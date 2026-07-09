@@ -38,8 +38,6 @@ If n8n runs inside Docker, swap `127.0.0.1` for `host.docker.internal` in the tw
 | [`RAG_ARCHITECTURE.md`](RAG_ARCHITECTURE.md) | The 5-stage pipeline explained in depth |
 | [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) | Node-by-node config, testing, production notes |
 | [`LOCAL_MODELS_SETUP.md`](LOCAL_MODELS_SETUP.md) | Model selection, GPU acceleration, troubleshooting |
-| [`video/methodology-animation.html`](video/methodology-animation.html) | Self-contained animated explainer of the build process |
-| [`LINKEDIN_POST.md`](LINKEDIN_POST.md) | The write-up this repo accompanies |
 | [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md), [`QUICK_REFERENCE.txt`](QUICK_REFERENCE.txt) | Background context, not required to run the pipeline |
 
 ## How it works
