@@ -1,6 +1,6 @@
-I built a local RAG pipeline in n8n this week (LM Studio, Gemma-4-12B, Qwen3 embeddings). But the interesting part wasn't the RAG system. It was how I built it.
+I used three different AI models to build one automation, and none of them were allowed to grade their own homework.
 
-I've stopped using one AI model to write and grade its own homework. Instead:
+One built it. One tried to break it. One checked the wreckage against reality. Here's what that caught, on a local RAG pipeline (n8n, LM Studio, Gemma-4-12B, Qwen3 embeddings):
 
 → Haiku scaffolded the workflow: 7 nodes, webhook to embedding to retrieval to generation, plus the docs.
 → Fable ran QA on it, adversarial, model-agnostic, poking at edge cases.
