@@ -1,0 +1,157 @@
+{
+  "name": "RAG Pipeline - LM Studio (Gemma 4-12B + Qwen3 Embedding)",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rag",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "7f3c2a1e-9b4d-4e6f-8a2c-1d5e7b9f0a3c",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Stage 1: Validate input\n// Webhook v2 nests the POST payload under $json.body\nconst raw = $input.first().json;\nconst input = raw.body || raw;\n\nconst question = (input.question || '').trim();\nif (!question) {\n  throw new Error('Question is required. Send JSON: {\"question\": \"...\"}');\n}\n\nreturn {\n  question: question,\n  docId: input.docId || 'doc-' + Date.now(),\n  receivedAt: new Date().toISOString()\n};"
+      },
+      "id": "2b8e4d6f-1a3c-4b5d-9e7f-6c8a0b2d4e6f",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Stage 2: Embed query via LM Studio (OpenAI-compatible API)\n// LM Studio default endpoint: http://127.0.0.1:1234\n// If n8n runs in Docker, use http://host.docker.internal:1234 instead.\nconst LM_STUDIO_URL = 'http://127.0.0.1:1234';\nconst EMBED_MODEL = 'text-embedding-qwen3-embedding-8b';\n\nconst question = $input.first().json.question;\n\nlet res;\ntry {\n  res = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${LM_STUDIO_URL}/v1/embeddings`,\n    body: { model: EMBED_MODEL, input: question },\n    json: true,\n    timeout: 60000\n  });\n} catch (error) {\n  throw new Error(`LM Studio embedding call failed: ${error.message}. Check LM Studio is running on ${LM_STUDIO_URL} with '${EMBED_MODEL}' loaded (Developer tab > Server running).`);\n}\n\nconst embedding = res && res.data && res.data[0] && res.data[0].embedding;\nif (!embedding || embedding.length === 0) {\n  throw new Error(`Embedding response was empty. Verify model id '${EMBED_MODEL}' matches exactly what LM Studio shows under loaded models.`);\n}\n\nreturn {\n  question: question,\n  embedding: embedding,\n  embeddingModel: EMBED_MODEL,\n  embeddingDimension: embedding.length\n};"
+      },
+      "id": "5a7c9e1b-3d5f-4a6b-8c0d-2e4f6a8b0c1d",
+      "name": "Embed Query (LM Studio Qwen3)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Stage 3: Vector retrieval (mock for demo)\n// In production: replace with a Qdrant search using $json.embedding.\n// The real embedding IS generated upstream, so swapping this node\n// for a Qdrant query is the only change needed to go live.\nconst { question, embedding, embeddingModel, embeddingDimension } = $input.first().json;\n\nconst mockDocuments = [\n  {\n    chunkId: 1,\n    similarity: 0.92,\n    text: 'Architecture decisions shape system outcomes. Design patterns, scalability constraints, and deployment environments all influence technical choices. Microservices enable independent scaling but increase operational complexity.'\n  },\n  {\n    chunkId: 2,\n    similarity: 0.87,\n    text: 'Automation frameworks reduce manual effort and improve consistency. Task orchestration, workflow triggers, and error handling are critical components. Event-driven architecture allows real-time processing at scale.'\n  },\n  {\n    chunkId: 3,\n    similarity: 0.81,\n    text: 'AI systems require careful evaluation of outputs. Confidence scoring helps identify uncertain predictions. Hallucination detection and source verification prevent misinformation.'\n  }\n];\n\nreturn {\n  question: question,\n  embeddingModel: embeddingModel,\n  embeddingDimension: embeddingDimension,\n  retrievalResults: mockDocuments,\n  resultCount: mockDocuments.length\n};"
+      },
+      "id": "9d1f3b5a-7c9e-4d2f-b4a6-8c0e2a4c6e8a",
+      "name": "Retrieve Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Stage 4: Build RAG prompt with retrieved context\nconst { question, retrievalResults, embeddingModel, embeddingDimension } = $input.first().json;\nconst results = retrievalResults || [];\n\nconst contextText = results\n  .map((r, i) => `[Source ${i + 1}] (Similarity: ${(r.similarity * 100).toFixed(1)}%)\\n${r.text}`)\n  .join('\\n\\n');\n\nconst systemPrompt = `You are an expert AI assistant specializing in architecture, automation, and AI systems. You have access to internal documentation and must always cite your sources using [Source N] format. Answer ONLY from the provided context. If the context does not contain the answer, say so.`;\n\nconst userPrompt = `Based on the following documentation:\\n\\n${contextText}\\n\\nQuestion: ${question}\\n\\nProvide a detailed answer citing specific sections.`;\n\nreturn {\n  systemPrompt: systemPrompt,\n  userPrompt: userPrompt,\n  sources: results,\n  question: question,\n  embeddingModel: embeddingModel,\n  embeddingDimension: embeddingDimension\n};"
+      },
+      "id": "4e6a8c0b-2d4f-4e6a-9c1d-3f5b7d9f1b3d",
+      "name": "Build RAG Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Stage 5: Generate answer via LM Studio (google/gemma-4-12b)\nconst LM_STUDIO_URL = 'http://127.0.0.1:1234';\nconst LLM_MODEL = 'google/gemma-4-12b';\n\nconst { systemPrompt, userPrompt, sources, question, embeddingModel, embeddingDimension } = $input.first().json;\n\nlet res;\ntry {\n  res = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${LM_STUDIO_URL}/v1/chat/completions`,\n    body: {\n      model: LLM_MODEL,\n      messages: [\n        { role: 'system', content: systemPrompt },\n        { role: 'user', content: userPrompt }\n      ],\n      temperature: 0.3,\n      max_tokens: 2048\n    },\n    json: true,\n    timeout: 180000\n  });\n} catch (error) {\n  throw new Error(`LM Studio chat call failed: ${error.message}. Check LM Studio is running on ${LM_STUDIO_URL} with '${LLM_MODEL}' loaded.`);\n}\n\nconst choice = res && res.choices && res.choices[0];\nconst message = choice && choice.message;\nconst answer = message && message.content;\n\n// Gemma 4-12B is a reasoning model: it thinks in reasoning_content first,\n// then writes the final answer to content. If max_tokens is exhausted\n// mid-reasoning, content comes back empty with finish_reason 'length'.\nif (!answer || answer.trim().length === 0) {\n  if (choice && choice.finish_reason === 'length') {\n    throw new Error(`Token budget exhausted during reasoning (finish_reason: length). Increase max_tokens above 2048.`);\n  }\n  throw new Error(`LLM returned an empty response. Verify model id '${LLM_MODEL}' matches what LM Studio shows.`);\n}\n\n// Pass sources + question through so Format Response can build citations\nreturn {\n  question: question,\n  answer: answer.trim(),\n  sources: sources,\n  llmModel: LLM_MODEL,\n  embeddingModel: embeddingModel,\n  embeddingDimension: embeddingDimension,\n  usage: res.usage || null\n};"
+      },
+      "id": "8b0d2f4a-6c8e-4b1d-a3f5-7b9d1f3a5c7e",
+      "name": "Generate Answer (LM Studio Gemma)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Stage 6: Format final response with citations and metadata\nconst { question, answer, sources, llmModel, embeddingModel, embeddingDimension, usage } = $input.first().json;\nconst results = sources || [];\n\nreturn {\n  status: 'success',\n  question: question,\n  answer: answer,\n  citations: results.map((s, i) => ({\n    sourceId: i + 1,\n    chunkId: s.chunkId,\n    similarity: s.similarity,\n    preview: s.text.substring(0, 150) + '...'\n  })),\n  metadata: {\n    generatedAt: new Date().toISOString(),\n    embeddingModel: embeddingModel,\n    embeddingDimension: embeddingDimension,\n    llmModel: llmModel,\n    provider: 'LM Studio (local, OpenAI-compatible API)',\n    tokenUsage: usage,\n    retrievalCount: results.length,\n    pipeline: 'RAG (Retrieval-Augmented Generation) - Self-Hosted',\n    version: '2.1',\n    costEstimate: 'Free (local models)'\n  }\n};"
+      },
+      "id": "1c3e5a7b-9d1f-4c2e-8b4d-6f8a0c2e4a6c",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Embed Query (LM Studio Qwen3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Query (LM Studio Qwen3)": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Chunks": {
+      "main": [
+        [
+          {
+            "node": "Build RAG Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build RAG Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Answer (LM Studio Gemma)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Answer (LM Studio Gemma)": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

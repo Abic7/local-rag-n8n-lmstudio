@@ -1,0 +1,17 @@
+# Raw screen recordings — large binaries, not source material.
+# The animation source (video/methodology-animation.html) stays tracked.
+video/*.mp4
+video/*.mov
+video/*.webm
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local env / secrets — none should exist in this repo, but never risk it
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
