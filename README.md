@@ -1,6 +1,6 @@
 # local-rag-n8n-lmstudio
 
-A fully local RAG (Retrieval-Augmented Generation) pipeline built in n8n, running entirely against [LM Studio](https://lmstudio.ai) — no cloud API, no per-query cost, no data leaving the machine.
+A fully local RAG (Retrieval-Augmented Generation) pipeline built in n8n, running entirely against [LM Studio](https://lmstudio.ai) no cloud API, no per-query cost, no data leaving the machine.
 
 - **LLM:** `google/gemma-4-12b`
 - **Embeddings:** `text-embedding-qwen3-embedding-8b`
@@ -9,9 +9,10 @@ A fully local RAG (Retrieval-Augmented Generation) pipeline built in n8n, runnin
 
 ## Why this exists
 
-Most RAG walkthroughs assume a cloud API key. This one doesn't — every embedding call and every generation call hits a model running on your own hardware. The trade-off is latency (seconds, not milliseconds) for zero marginal cost and zero data exposure.
+Most RAG walkthroughs assume a cloud API key. This one doesn't, every embedding call and every generation call hits a model running on your own hardware. The trade-off is latency (seconds, not milliseconds) for zero marginal cost and zero data exposure.
 
-It also doubles as a worked example of a build methodology: one model scaffolds the workflow, a second attacks it as an adversarial reviewer, and a human plus a third model verify it against the real running system. See [`LINKEDIN_POST.md`](LINKEDIN_POST.md) and the animation at [`video/methodology-animation.html`](video/methodology-animation.html) for that story — five real bugs only surfaced once someone actually hit the live endpoint (wrong port, a webhook that never returned its answer, a payload read at the wrong nesting depth, dropped citation data between nodes, and a reasoning model that silently ran out of its token budget).
+It also doubles as a worked example of a build methodology: one model scaffolds the workflow, a second attacks it as an adversarial reviewer, and a human plus a third model verify it against the real running system. 
+For that story, five real bugs only surfaced once someone actually hit the live endpoint (wrong port, a webhook that never returned its answer, a payload read at the wrong nesting depth, dropped citation data between nodes, and a reasoning model that silently ran out of its token budget).
 
 ## Quick start
 
